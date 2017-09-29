@@ -26,6 +26,7 @@ func GetCommandName(prefix, binary string) string {
 // A Command that can be executed.
 type Command struct {
 	Name        string `json:"-"`
+	FullName    string `json:"-"`
 	Path        string `json:"-"`
 	Description string `json:"description"`
 }
@@ -59,6 +60,8 @@ func (s Scanner) Scan() (result []Command, errors []error) {
 		}
 	}
 
+	result = squashCommands(result)
+
 	return
 }
 
@@ -70,9 +73,10 @@ func (s Scanner) ScanPath(path string) (result []Command, errors []error) {
 		for _, file := range files {
 			if !file.IsDir() {
 				if name := GetCommandName(prefix, file.Name()); name != "" {
+					fullname := prefix + "-" + name
 					binary := filepath.Join(path, file.Name())
 
-					if command, err := FromBinary(name, binary); err == nil {
+					if command, err := FromBinary(fullname, name, binary); err == nil {
 						result = append(result, command)
 					} else {
 						errors = append(errors, err)
@@ -82,11 +86,26 @@ func (s Scanner) ScanPath(path string) (result []Command, errors []error) {
 		}
 	}
 
+	result = squashCommands(result)
+
+	return
+}
+
+func squashCommands(commands []Command) (result []Command) {
+	known := map[string]bool{}
+
+	for _, command := range commands {
+		if !known[command.FullName] {
+			known[command.FullName] = true
+			result = append(result, command)
+		}
+	}
+
 	return
 }
 
 // FromBinary tries to build a Command from a binary at the specified path.
-func FromBinary(name, path string) (Command, error) {
+func FromBinary(fullname, name, path string) (Command, error) {
 	cmd := exec.Command(path, "--describe")
 	r, err := cmd.StdoutPipe()
 
@@ -103,8 +122,9 @@ func FromBinary(name, path string) (Command, error) {
 	decoder := json.NewDecoder(r)
 
 	result := Command{
-		Name: name,
-		Path: path,
+		Name:     name,
+		FullName: fullname,
+		Path:     path,
 	}
 
 	if err = decoder.Decode(&result); err != nil {

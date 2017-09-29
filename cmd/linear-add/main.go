@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/ereOn/linear/pkg/command"
 	"github.com/ereOn/linear/pkg/database"
@@ -11,26 +10,26 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "linear project",
-	Short: "Start a new project.",
+	Use:   "linear add",
+	Short: "Add a new component to an existing project.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 
-		path, err := filepath.Abs(database.DefaultDatabaseFileName)
+		scanner, err := database.NewDefaultScanner()
 
 		if err != nil {
 			return err
 		}
 
-		_, err = database.FromFile(path)
+		path, db, err := scanner.Scan()
 
-		if err == nil {
-			return fmt.Errorf("a database already exists at `%s`", path)
+		if err != nil {
+			return err
 		}
 
-		db := database.Database{}
+		fmt.Println(path, db)
 
-		return db.ToFile(path)
+		return nil
 	},
 }
 

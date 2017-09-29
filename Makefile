@@ -1,7 +1,9 @@
 COMMANDS=linear \
-		 linear-project
+		 linear-project \
+		 linear-add
 
-PACKAGES=command
+PACKAGES=command \
+		 database
 
 ifeq ($(OS),Windows_NT)
 EXT:=.exe

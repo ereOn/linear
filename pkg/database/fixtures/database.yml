@@ -1,0 +1,7 @@
+components:
+- name: foo
+  type: service
+  location: services/foo
+- name: bar
+  type: library
+  location: lib/bar
