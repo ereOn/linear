@@ -2,6 +2,7 @@ package command
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -30,8 +31,6 @@ type Command struct {
 }
 
 var (
-	// DefaultScanCommandPrefix is the prefix for command scans.
-	DefaultScanCommandPrefix = "linear"
 	// DefaultScanEnvironmentVariables is the default environment variables to scan for.
 	DefaultScanEnvironmentVariables = []string{"PATH"}
 )
@@ -67,15 +66,13 @@ func (s Scanner) Scan() (result []Command, errors []error) {
 func (s Scanner) ScanPath(path string) (result []Command, errors []error) {
 	prefix := s.CommandPrefix
 
-	if prefix == "" {
-		prefix = DefaultScanCommandPrefix
-	}
-
 	if files, err := ioutil.ReadDir(path); err == nil {
 		for _, file := range files {
 			if !file.IsDir() {
 				if name := GetCommandName(prefix, file.Name()); name != "" {
-					if command, err := FromBinary(name, filepath.Join(path, file.Name())); err == nil {
+					binary := filepath.Join(path, file.Name())
+
+					if command, err := FromBinary(name, binary); err == nil {
 						result = append(result, command)
 					} else {
 						errors = append(errors, err)
@@ -90,7 +87,7 @@ func (s Scanner) ScanPath(path string) (result []Command, errors []error) {
 
 // FromBinary tries to build a Command from a binary at the specified path.
 func FromBinary(name, path string) (Command, error) {
-	cmd := exec.Command(path, "describe")
+	cmd := exec.Command(path, "--describe")
 	r, err := cmd.StdoutPipe()
 
 	if err != nil {
@@ -111,7 +108,7 @@ func FromBinary(name, path string) (Command, error) {
 	}
 
 	if err = decoder.Decode(&result); err != nil {
-		return Command{}, err
+		return Command{}, fmt.Errorf("calling `%s --describe`: %s", path, err)
 	}
 
 	if err = cmd.Wait(); err != nil {
@@ -135,5 +132,22 @@ func (c Command) AsCobraCommand() *cobra.Command {
 			p.Stdout = cmd.OutOrStdout()
 			return p.Run()
 		},
+	}
+}
+
+// ImplementDescribe adds a description flag to the command.
+func ImplementDescribe(cmd *cobra.Command) {
+	run := cmd.RunE
+	describe := cmd.Flags().Bool("describe", false, "Describe the command")
+	cmd.Flags().MarkHidden("describe")
+	cmd.RunE = func(c *cobra.Command, args []string) error {
+		if *describe {
+			encoder := json.NewEncoder(c.OutOrStdout())
+			return encoder.Encode(Command{
+				Description: cmd.Short,
+			})
+		}
+
+		return run(c, args)
 	}
 }

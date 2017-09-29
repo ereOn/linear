@@ -14,7 +14,9 @@ var rootCmd = &cobra.Command{
 }
 
 func main() {
-	scanner := command.Scanner{}
+	scanner := command.Scanner{
+		CommandPrefix: "linear",
+	}
 	commands, errors := scanner.Scan()
 
 	for _, command := range commands {
