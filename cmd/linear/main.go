@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/ereOn/linear/pkg/command"
 	"github.com/spf13/cobra"
 )
 
@@ -11,13 +13,21 @@ var rootCmd = &cobra.Command{
 	Short: "A project bootstraper with style",
 }
 
-var (
-	subcommandsBinaries = getSubcommandBinaries(os.Getenv("PATH"))
-	subcommands         = getSubcommands(subcommandsBinaries)
-)
-
 func main() {
-	rootCmd.AddCommand(subcommands...)
+	scanner := command.Scanner{}
+	commands, errors := scanner.Scan()
+
+	for _, command := range commands {
+		rootCmd.AddCommand(command.AsCobraCommand())
+	}
+
+	if len(errors) > 0 {
+		fmt.Fprintf(os.Stderr, "Errors while scanning for commands:\n")
+
+		for _, err := range errors {
+			fmt.Fprintf(os.Stderr, "- %s\n", err)
+		}
+	}
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
