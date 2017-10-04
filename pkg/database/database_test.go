@@ -2,6 +2,10 @@ package database
 
 import "testing"
 
+type testComponentProperties struct {
+	Location string
+}
+
 func TestFromFile(t *testing.T) {
 	database, err := FromFile("fixtures/database.yml")
 
@@ -11,6 +15,18 @@ func TestFromFile(t *testing.T) {
 
 	if len(database.Components) != 2 {
 		t.Errorf("expected %d components but got %d", 2, len(database.Components))
+	}
+
+	component := database.Find("service", "foo")
+
+	if component == nil {
+		t.Error("component should not be nil")
+	}
+
+	var properties testComponentProperties
+
+	if err = component.As(&properties); err != nil {
+		t.Errorf("no error was expected but got: %s", err)
 	}
 }
 

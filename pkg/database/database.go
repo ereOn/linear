@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,8 +17,14 @@ type Database struct {
 
 // Component represents a project component.
 type Component struct {
-	Name string
-	Type string
+	Name       string
+	Type       string
+	Properties map[string]interface{}
+}
+
+// As decodes the component as the specified structure.
+func (c Component) As(v interface{}) error {
+	return mapstructure.Decode(c.Properties, v)
 }
 
 // FromFile loads a Database from a file on disk.

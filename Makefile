@@ -1,5 +1,5 @@
 COMMANDS=linear \
-		 linear-project \
+		 linear-init \
 		 linear-add
 
 PACKAGES=command \
