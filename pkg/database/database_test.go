@@ -1,6 +1,9 @@
 package database
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 type testComponentProperties struct {
 	Location string
@@ -27,6 +30,14 @@ func TestFromFile(t *testing.T) {
 
 	if err = component.As(&properties); err != nil {
 		t.Errorf("no error was expected but got: %s", err)
+	}
+
+	expected := testComponentProperties{
+		Location: "services/foo",
+	}
+
+	if !reflect.DeepEqual(properties, expected) {
+		t.Errorf("expected `%v`, got `%v`", expected, properties)
 	}
 }
 
