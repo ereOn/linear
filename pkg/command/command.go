@@ -2,6 +2,7 @@ package command
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -168,6 +169,10 @@ func ImplementDescribe(cmd *cobra.Command) {
 			})
 		}
 
-		return run(c, args)
+		if run != nil {
+			return run(c, args)
+		}
+
+		return errors.New("missing arguments")
 	}
 }

@@ -1,6 +1,7 @@
 COMMANDS=linear \
 		 linear-init \
-		 linear-add
+		 linear-add \
+		 linear-add-api
 
 PACKAGES=command \
 		 database
