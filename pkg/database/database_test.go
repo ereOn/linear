@@ -20,7 +20,7 @@ func TestFromFile(t *testing.T) {
 		t.Errorf("expected %d components but got %d", 2, len(database.Components))
 	}
 
-	component := database.Find("service", "foo")
+	component := database.Find(ComponentID{Type: "service", Name: "foo"})
 
 	if component == nil {
 		t.Error("component should not be nil")
@@ -28,7 +28,7 @@ func TestFromFile(t *testing.T) {
 
 	var properties testComponentProperties
 
-	if err = component.As(&properties); err != nil {
+	if err = component.DecodeProperties(&properties); err != nil {
 		t.Errorf("no error was expected but got: %s", err)
 	}
 

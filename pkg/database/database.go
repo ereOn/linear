@@ -15,15 +15,30 @@ type Database struct {
 	Components []Component
 }
 
-// Component represents a project component.
-type Component struct {
-	Name       string
-	Type       string
-	Properties map[string]interface{}
+// ComponentID represents a component ID.
+type ComponentID struct {
+	Name string
+	Type string
 }
 
-// As decodes the component as the specified structure.
-func (c Component) As(v interface{}) error {
+// Equals compares two component ids.
+func (i ComponentID) Equals(id ComponentID) bool {
+	return i.Name == id.Name && i.Type == id.Type
+}
+
+func (i ComponentID) String() string {
+	return fmt.Sprintf("%s:%s", i.Type, i.Name)
+}
+
+// Component represents a project component.
+type Component struct {
+	ID         ComponentID
+	Version    string
+	Properties interface{}
+}
+
+// DecodeProperties decodes the component properties as the specified structure.
+func (c Component) DecodeProperties(v interface{}) error {
 	return mapstructure.Decode(c.Properties, v)
 }
 
@@ -60,7 +75,7 @@ func FromReader(r io.Reader) (*Database, error) {
 // ByType returns all the components of the specified type.
 func (d Database) ByType(t string) (components []Component) {
 	for _, component := range d.Components {
-		if component.Type == t {
+		if component.ID.Type == t {
 			components = append(components, component)
 		}
 	}
@@ -69,9 +84,9 @@ func (d Database) ByType(t string) (components []Component) {
 }
 
 // Find returns a component of the specified type and name.
-func (d Database) Find(t, name string) *Component {
+func (d Database) Find(id ComponentID) *Component {
 	for _, component := range d.Components {
-		if component.Type == t && component.Name == name {
+		if component.ID.Equals(id) {
 			return &component
 		}
 	}
@@ -81,8 +96,8 @@ func (d Database) Find(t, name string) *Component {
 
 // Add a new component to the database.
 func (d *Database) Add(component Component) error {
-	if d.Find(component.Type, component.Name) != nil {
-		return fmt.Errorf("a component of type `%s` with the name `%s` already exists", component.Type, component.Name)
+	if d.Find(component.ID) != nil {
+		return fmt.Errorf("a component of type `%s` with the name `%s` already exists", component.ID.Type, component.ID.Name)
 	}
 
 	d.Components = append(d.Components, component)
@@ -91,9 +106,9 @@ func (d *Database) Add(component Component) error {
 }
 
 // Remove a component from the database. If found, the removed component is returned.
-func (d *Database) Remove(t, name string) *Component {
+func (d *Database) Remove(id ComponentID) *Component {
 	for i, component := range d.Components {
-		if component.Type == t && component.Name == name {
+		if component.ID.Equals(id) {
 			d.Components = append(d.Components[:i], d.Components[i+1:]...)
 
 			return &component

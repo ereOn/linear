@@ -1,9 +1,11 @@
 components:
-- name: foo
-  type: service
+- id:
+    name: foo
+    type: service
   properties:
     location: services/foo
-- name: bar
-  type: library
+- id:
+    name: bar
+    type: library
   properties:
       location: lib/bar
